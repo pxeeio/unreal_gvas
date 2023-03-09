@@ -1,1 +1,8 @@
+# Depencencies
+Cargo.lock
+
+# Build directory
 /target
+
+# Miscellaneous
+.DS_Store
