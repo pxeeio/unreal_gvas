@@ -1,3 +1,7 @@
+//! This module contains the main types and functions used for handling GVAS files.
+//! 
+//! It also provides an `errors` submodule that defines custom error types
+
 pub mod errors;
 pub use errors::{
     GVASError,
