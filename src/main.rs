@@ -1,16 +1,17 @@
 use std::path::Path;
 
 mod gvas;
-use crate::gvas::{GVASError, GVASReader};
+use crate::gvas::{GVAS, GVASError, GVASReader};
 
-fn main() -> Result<(), GVASError> {
+fn main() {
     let path = Path::new(
         env!("CARGO_MANIFEST_DIR")
-    ).join("resources/HL-00-00.sav");
+    ).join("tests/resources/HL-00-00.sav");
 
-    let gvas = GVASReader::parse(&path)?;
+    let gvas: Result<GVAS, GVASError> = GVASReader::parse(&path);
 
-    println!("{}", gvas);
-
-    Ok(())
+    match gvas {
+        Ok(gvas) => println!("{}", gvas),
+        Err(error) => println!("Error: {}", error),
+    }
 }

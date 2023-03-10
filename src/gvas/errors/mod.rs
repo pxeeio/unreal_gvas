@@ -1,3 +1,28 @@
+//! This module defines custom errors types for the crate.
+//! 
+//! # Examples
+//! 
+//! ```
+//! use std::{
+//!     fs::{File, Metadata},
+//!     path::Path,
+//! };
+//! 
+//! use unreal_gvas::GVASReader;
+//! 
+//! let path = Path::new(
+//!     env!("CARGO_MANIFEST_DIR")
+//! ).join("tests/resources/empty.sav");
+//! 
+//! // This will error with GVASError::EmptyFileError because the file is empty
+//! let gvas = GVASReader::parse(&path);
+//! 
+//! match gvas {
+//!     Ok(_) => println!("File is not empty"),
+//!     Err(error) => println!("Error: {}", error),
+//! }
+//! ```
+
 use std::{
     fmt::{Display, Formatter, Result},
     string::{FromUtf8Error, FromUtf16Error},
