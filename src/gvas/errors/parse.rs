@@ -7,7 +7,7 @@ use std::{
 #[derive(Debug)]
 pub enum GVASParseError {
     /// If the first 4 bytes of the file don't match the GVAS file signature
-    InvalidFileSignature(i32),
+    InvalidFileSignature(u32),
     /// If the parsed string size is invalid
     InvalidUEStringSize(i32),
     /// If the input bytes are not valid UTF-8

@@ -5,7 +5,7 @@ use std::{
 
 use unreal_gvas::{
     GVAS,
-    GVASReader,
+    GVASParser,
     errors::GVASError,
 };
 
@@ -15,7 +15,7 @@ fn test_error_on_nonexistent_file() {
         env!("CARGO_MANIFEST_DIR")
     ).join("tests/resources/i-dont-exist.sav");
 
-    let gvas: Result<GVAS, GVASError> = GVASReader::parse(&path);
+    let gvas: Result<GVAS, GVASError> = GVASParser::parse(&path);
     assert!(gvas.is_err());
 }
 
@@ -27,7 +27,7 @@ fn test_error_on_empty_gvas_file() {
 
     write(&path, "").unwrap();
 
-    let gvas: Result<GVAS, GVASError> = GVASReader::parse(&path);
+    let gvas: Result<GVAS, GVASError> = GVASParser::parse(&path);
 
     // Clean up here in case this test fails
     remove_file(path).unwrap();

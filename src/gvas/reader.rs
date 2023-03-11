@@ -1,95 +1,74 @@
 use byteorder::{LittleEndian, ReadBytesExt};
-use std::{
-    fs::{File, Metadata},
-    io::{Cursor, Read, Seek},
-    path::Path,
-};
+use std::io::{Cursor, Read};
 
-use super::{
-    errors::{
-        GVASError,
-        GVASParseError,
-    },
-    GVAS,
-    UEngineVersion,
-};
+use crate::errors::GVASReadError;
 
-pub struct GVASReader {}
+pub struct GVASReader {
+    cursor: Cursor<Vec<u8>>,
+}
 
 impl GVASReader {
-    /// GVAS file signature in Little Endian. Decodes to "GVAS"
-    const GVAS_FILE_SIGNATURE: i32 = 0x53415647;
-
-    fn open_file<P>(path: &P) -> Result<(Cursor<Vec<u8>>, u64), GVASError> where P: AsRef<Path> {
-        let mut file: File = File::open(path)?;
-        let meta: Metadata = file.metadata()?;
-
-        if meta.len() == 0 {
-            return match path.as_ref().to_str() {
-                Some(path) => Err(GVASError::EmptyFileError(path.to_string())),
-                None => Err(GVASError::UnexpectedError("Failed to convert path to string")),
-            };
-        }
-
-        let mut bytes: Vec<u8> = Vec::new();
-        file.read_to_end(&mut bytes)?;
-
-        Ok((Cursor::new(bytes), meta.len()))
+    pub fn new(cursor: Cursor<Vec<u8>>) -> Self {
+        GVASReader { cursor }
     }
 
-    fn validate_file_signature(cursor: &mut Cursor<Vec<u8>>) -> Result<(), GVASError> {
-        let file_signature: i32 = cursor.read_i32::<LittleEndian>()?;
-
-        if file_signature != Self::GVAS_FILE_SIGNATURE {
-            return Err(GVASParseError::InvalidFileSignature(file_signature).into());
+    pub fn read_exact(&mut self, buf: &mut [u8]) -> Result<(), GVASReadError> {
+        match self.cursor.read_exact(buf) {
+            Ok(_) => Ok(()),
+            Err(error) => Err(error.into()),
         }
-
-        Ok(())
     }
 
-    /// Given an absolute path to a file, validates and parses the file into a GVAS struct
-    pub fn parse<P>(path: &P) -> Result<GVAS, GVASError> where P: AsRef<Path> {
-        let result: (Cursor<Vec<u8>>, u64) = Self::open_file(path)?;
-        let mut cursor: Cursor<Vec<u8>> = result.0;
-        let size: u64 = result.1;
+    pub fn read_i32(&mut self) -> Result<i32, GVASReadError> {
+        match self.cursor.read_i32::<LittleEndian>() {
+            Ok(value) => Ok(value),
+            Err(error) => Err(error.into()),}
+    }
 
-        Self::validate_file_signature(&mut cursor)?;
+    pub fn read_u8(&mut self) -> Result<u8, GVASReadError> {
+        match self.cursor.read_u8() {
+            Ok(value) => Ok(value),
+            Err(error) => Err(error.into()),
+        }
+    }
 
-        let save_game_file_version: i32 = cursor.read_i32::<LittleEndian>()?;
-        let package_file_ue4_version: i32 = cursor.read_i32::<LittleEndian>()?;
+    pub fn read_u16(&mut self) -> Result<u16, GVASReadError> {
+        match self.cursor.read_u16::<LittleEndian>() {
+            Ok(value) => Ok(value),
+            Err(error) => Err(error.into()),
+        }
+    }
 
-        let major: u16 = cursor.read_u16::<LittleEndian>()?;
-        let minor: u16 = cursor.read_u16::<LittleEndian>()?;
-        let patch: u16 = cursor.read_u16::<LittleEndian>()?;
-        let change_list: u32 = cursor.read_u32::<LittleEndian>()?;
-        let branch_len: i32 = cursor.read_i32::<LittleEndian>()?;     
+    pub fn read_u32(&mut self) -> Result<u32, GVASReadError> {
+        match self.cursor.read_u32::<LittleEndian>() {
+            Ok(value) => Ok(value),
+            Err(error) => Err(error.into()),
+        }
+    }
 
-        if branch_len <= 0 {
-            return Err(GVASParseError::InvalidUEStringSize(branch_len).into());
-        }   
+    pub fn read_u64(&mut self) -> Result<u64, GVASReadError> {
+        match self.cursor.read_u64::<LittleEndian>() {
+            Ok(value) => Ok(value),
+            Err(error) => Err(error.into()),
+        }
+    }
 
-        // Do not read the null terminator
-        let mut buff: Vec<u8> = vec![0u8; branch_len as usize - 1];
-        cursor.read_exact(&mut buff)?;
+    pub fn read_ue_string(&mut self) -> Result<Option<String>, GVASReadError> {
+        let length: i32 = self.read_i32()?;
 
-        let branch: String = String::from_utf8(buff)?;
-        
-        let engine_version: UEngineVersion = UEngineVersion {
-            major,
-            minor,
-            patch,
-            changelist: change_list,
-            branch: branch,
-        };
-
-        cursor.rewind()?;
-
-        Ok(GVAS {
-            save_game_file_version,
-            package_file_ue4_version,
-            engine_version,
-            cursor,
-            size,
-        })        
+        if length == 0 {
+            return Ok(None);
+        } else if length < 0 {
+            return Err(GVASReadError::InvalidUEStringSize(length));
+        } else if length == 1 {
+            return Ok(Some(String::from("")));
+        } else {
+            let mut bytes: Vec<u8> = vec![0u8; length as usize];
+            self.read_exact(&mut bytes)?;
+    
+            Ok(Some(
+                String::from_utf8(bytes).unwrap_or_else(|_| String::from("None"))
+            ))
+        }
     }
 }

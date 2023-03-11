@@ -2,14 +2,14 @@
 //! 
 //! It also provides an `errors` submodule that defines custom error types
 
+mod data;
+pub use data::CustomData;
+
 pub mod errors;
 pub use errors::{
     GVASError,
     parse::GVASParseError,
 };
-
-mod version;
-pub use version::UEngineVersion;
 
 mod guid;
 pub use guid::GUID;
@@ -17,5 +17,11 @@ pub use guid::GUID;
 mod gvas;
 pub use gvas::GVAS;
 
+mod parser;
+pub use parser::GVASParser;
+
+mod properties;
+
 mod reader;
-pub use reader::GVASReader;
+
+mod version;

@@ -8,14 +8,14 @@
 //!     path::Path,
 //! };
 //! 
-//! use unreal_gvas::GVASReader;
+//! use unreal_gvas::GVASParser;
 //! 
 //! let path = Path::new(
 //!     env!("CARGO_MANIFEST_DIR")
 //! ).join("tests/resources/empty.sav");
 //! 
 //! // This will error with GVASError::EmptyFileError because the file is empty
-//! let gvas = GVASReader::parse(&path);
+//! let gvas = GVASParser::parse(&path);
 //! 
 //! match gvas {
 //!     Ok(_) => println!("File is not empty"),
@@ -31,9 +31,13 @@ use std::{
 pub mod parse;
 pub use parse::GVASParseError;
 
+pub mod read;
+pub use read::GVASReadError;
+
 #[derive(Debug)]
 pub enum GVASError {
     ParseError(GVASParseError),
+    ReadError(GVASReadError),
     EmptyFileError(String),
     FileIOError(std::io::Error),
     UnexpectedError(&'static str),
@@ -43,6 +47,9 @@ impl Display for GVASError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
             GVASError::ParseError(ref error) => {
+                Display::fmt(error, f)
+            },
+            GVASError::ReadError(ref error) => {
                 Display::fmt(error, f)
             },
             GVASError::EmptyFileError(ref path) => {
@@ -64,6 +71,12 @@ impl std::error::Error for GVASError {}
 impl From<GVASParseError> for GVASError {
     fn from(error: GVASParseError) -> Self {
         GVASError::ParseError(error)
+    }
+}
+
+impl From<GVASReadError> for GVASError {
+    fn from(error: GVASReadError) -> Self {
+        GVASError::ReadError(error)
     }
 }
 
